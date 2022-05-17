@@ -2,69 +2,82 @@ import React, { useState, useRef } from "react";
 import { Alert, Button, Form, Row, Spinner } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { postLogin } from "../../helpers/axiosHelper";
+import {
+  isLoadingPending,
+  setRespponse,
+  loginSucess,
+} from "../register/userSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 export const Login = () => {
-	const emailRef = useRef("");
-	const passwordRef = useRef("");
-	const [error, setError] = useState("");
-	const [loading, setLoading] = useState(false);
-	const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const emailRef = useRef("");
+  const passwordRef = useRef("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { res, isLoading } = useSelector((state) => state.user);
 
-	const handleSubmit = async () => {
-		const email = emailRef.current.value;
-		const password = passwordRef.current.value;
+  const handleSubmit = async () => {
+    const email = emailRef.current.value;
+    const password = passwordRef.current.value;
 
-		if (!email || !password) {
-			return alert("Please enter your email and password");
-		}
-		setLoading(true);
-		const { data } = await postLogin({ email, password });
-		setLoading(false);
+    if (!email || !password) {
+      return alert("Please enter your email and password");
+    }
+    //setLoading(true);
+    dispatch(isLoadingPending(true));
+    const { data } = await postLogin({ email, password });
+    //setLoading(false);
+    dispatch(isLoadingPending(false));
 
-		if (data.status === "success") {
-			const { name, email, _id } = data.user;
-			// if loging sucess, store user data in sessionStorage and redirect to dashboard page
-			sessionStorage.setItem("user", JSON.stringify({ name, email, _id }));
-			setError("");
-			navigate("/dashboard");
-			return;
-		}
+    if (data.status === "success") {
+      const { name, email, _id } = data.user;
+      dispatch(loginSucess(data.user));
+      // if loging sucess, store user data in sessionStorage and redirect to dashboard page
+      sessionStorage.setItem("user", JSON.stringify({ name, email, _id }));
+      //setError("");
 
-		// show error message
-		setError(data.message);
-	};
+      navigate("/dashboard");
+      return;
+    }
 
-	return (
-		<Row className="login-comp mt-5">
-			<Form>
-				<h3>Welcome Back </h3>
-				<hr />
+    // show error message
+    //setError(data.message);
+    dispatch(setRespponse(data));
+  };
 
-				{loading && <Spinner animation="border" variant="primary" />}
+  return (
+    <Row className="login-comp mt-5">
+      <Form>
+        <h3>Welcome Back </h3>
+        <hr />
 
-				{error && <Alert variant="danger">{error}</Alert>}
+        {isLoading && <Spinner animation="border" variant="primary" />}
 
-				<Form.Group className="mb-3" controlId="formGroupEmail">
-					<Form.Label>Email address</Form.Label>
-					<Form.Control ref={emailRef} type="email" placeholder="Enter email" />
-				</Form.Group>
-				<Form.Group className="mb-3" controlId="formGroupPassword">
-					<Form.Label>Password</Form.Label>
-					<Form.Control
-						ref={passwordRef}
-						type="password"
-						placeholder="Password"
-					/>
-				</Form.Group>
+        {res?.message && <Alert variant="danger">{res?.message}</Alert>}
 
-				<Button variant="primary" onClick={handleSubmit}>
-					Login
-				</Button>
+        <Form.Group className="mb-3" controlId="formGroupEmail">
+          <Form.Label>Email address</Form.Label>
+          <Form.Control ref={emailRef} type="email" placeholder="Enter email" />
+        </Form.Group>
+        <Form.Group className="mb-3" controlId="formGroupPassword">
+          <Form.Label>Password</Form.Label>
+          <Form.Control
+            ref={passwordRef}
+            type="password"
+            placeholder="Password"
+          />
+        </Form.Group>
 
-				<div className="text-end">
-					New here? <Link to="/register">Register</Link>
-				</div>
-			</Form>
-		</Row>
-	);
+        <Button variant="primary" onClick={handleSubmit}>
+          Login
+        </Button>
+
+        <div className="text-end">
+          New here? <Link to="/register">Register</Link>
+        </div>
+      </Form>
+    </Row>
+  );
 };

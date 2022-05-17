@@ -19,9 +19,13 @@ const userSlice = createSlice({
       state.isLoading = false;
       state.res = action.payload;
     },
+    loginSucess: (state, action) => {
+      state.isLoading = false;
+      state.user = action.payload;
+    },
   },
 });
 
 const { actions, reducer } = userSlice;
-export const { isLoadingPending, setRespponse } = actions;
+export const { isLoadingPending, setRespponse, loginSucess } = actions;
 export default reducer;
